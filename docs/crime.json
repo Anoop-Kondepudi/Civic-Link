@@ -1,0 +1,95 @@
+{
+  "reports": [
+    {
+      "id": "crime-001",
+      "description": "Car window smashed, belongings stolen. Happened in broad daylight around 2pm.",
+      "location": {
+        "city": "Dallas",
+        "state": "TX",
+        "address": "Deep Ellum parking lot",
+        "lat": 32.7833,
+        "lng": -96.7792
+      },
+      "timestamp": "2025-11-07T14:30:00Z",
+      "status": "open"
+    },
+    {
+      "id": "crime-002",
+      "description": "Witnessed package theft from front porch. Suspect fled in white van heading north.",
+      "location": {
+        "city": "Dallas",
+        "state": "TX",
+        "address": "Lakewood neighborhood, Abrams Rd",
+        "lat": 32.8412,
+        "lng": -96.7586
+      },
+      "timestamp": "2025-11-06T10:15:00Z",
+      "status": "open"
+    },
+    {
+      "id": "crime-003",
+      "description": "Graffiti vandalism on business storefront. Offensive language and symbols.",
+      "location": {
+        "city": "Dallas",
+        "state": "TX",
+        "address": "Knox-Henderson, Henderson Ave",
+        "lat": 32.8156,
+        "lng": -96.7892
+      },
+      "timestamp": "2025-11-08T07:20:00Z",
+      "status": "open"
+    },
+    {
+      "id": "crime-004",
+      "description": "Bike stolen from locked bike rack. Lock was cut with bolt cutters.",
+      "location": {
+        "city": "Dallas",
+        "state": "TX",
+        "address": "Katy Trail near Knox St",
+        "lat": 32.8134,
+        "lng": -96.7954
+      },
+      "timestamp": "2025-11-05T18:45:00Z",
+      "status": "open"
+    },
+    {
+      "id": "crime-005",
+      "description": "Suspicious person trying car door handles on parked vehicles late at night.",
+      "location": {
+        "city": "Dallas",
+        "state": "TX",
+        "address": "Uptown, Blackburn St",
+        "lat": 32.8014,
+        "lng": -96.8014
+      },
+      "timestamp": "2025-11-07T23:30:00Z",
+      "status": "open"
+    },
+    {
+      "id": "crime-006",
+      "description": "Catalytic converter stolen from parked car overnight. Loud noise reported by neighbors.",
+      "location": {
+        "city": "Dallas",
+        "state": "TX",
+        "address": "East Dallas, Gaston Ave",
+        "lat": 32.7919,
+        "lng": -96.7714
+      },
+      "timestamp": "2025-11-06T03:15:00Z",
+      "status": "open"
+    },
+    {
+      "id": "crime-007",
+      "description": "Attempted burglary at residential building. Broken window found in morning.",
+      "location": {
+        "city": "Dallas",
+        "state": "TX",
+        "address": "Highland Park, Armstrong Ave",
+        "lat": 32.8336,
+        "lng": -96.7933
+      },
+      "timestamp": "2025-11-08T06:00:00Z",
+      "status": "open"
+    }
+  ]
+}

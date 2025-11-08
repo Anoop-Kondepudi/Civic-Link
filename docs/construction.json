@@ -1,0 +1,82 @@
+{
+  "reports": [
+    {
+      "id": "const-001",
+      "description": "Large pothole on Main Street near the intersection. About 2 feet wide and causing traffic issues.",
+      "location": {
+        "city": "Dallas",
+        "state": "TX",
+        "address": "Main St & Commerce St",
+        "lat": 32.7817,
+        "lng": -96.7977
+      },
+      "timestamp": "2025-11-07T09:15:00Z",
+      "status": "open"
+    },
+    {
+      "id": "const-002",
+      "description": "Broken sidewalk with exposed rebar. Dangerous for pedestrians, especially at night.",
+      "location": {
+        "city": "Dallas",
+        "state": "TX",
+        "address": "Elm St near Dealey Plaza",
+        "lat": 32.7788,
+        "lng": -96.8082
+      },
+      "timestamp": "2025-11-06T14:30:00Z",
+      "status": "open"
+    },
+    {
+      "id": "const-003",
+      "description": "Road construction causing lane closure but no signage warning drivers. Nearly caused an accident.",
+      "location": {
+        "city": "Dallas",
+        "state": "TX",
+        "address": "McKinney Ave & Pearl St",
+        "lat": 32.7936,
+        "lng": -96.8004
+      },
+      "timestamp": "2025-11-07T16:45:00Z",
+      "status": "open"
+    },
+    {
+      "id": "const-004",
+      "description": "Multiple potholes along residential street. Water pooling in holes after rain.",
+      "location": {
+        "city": "Dallas",
+        "state": "TX",
+        "address": "Oak Lawn Ave near Cedar Springs",
+        "lat": 32.8067,
+        "lng": -96.8019
+      },
+      "timestamp": "2025-11-05T11:20:00Z",
+      "status": "open"
+    },
+    {
+      "id": "const-005",
+      "description": "Cracked asphalt and uneven road surface. Bikes and motorcycles at risk.",
+      "location": {
+        "city": "Dallas",
+        "state": "TX",
+        "address": "Lower Greenville Ave",
+        "lat": 32.8204,
+        "lng": -96.7699
+      },
+      "timestamp": "2025-11-08T08:00:00Z",
+      "status": "open"
+    },
+    {
+      "id": "const-006",
+      "description": "Construction debris left on sidewalk blocking wheelchair access.",
+      "location": {
+        "city": "Dallas",
+        "state": "TX",
+        "address": "Bishop Arts District, Davis St",
+        "lat": 32.7443,
+        "lng": -96.8186
+      },
+      "timestamp": "2025-11-07T13:10:00Z",
+      "status": "open"
+    }
+  ]
+}
