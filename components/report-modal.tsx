@@ -45,7 +45,9 @@ export function ReportModal({ report, isOpen, isClosing = false, onClose, marker
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/50 z-50"
+        className={`fixed inset-0 bg-black/50 z-50 transition-opacity duration-300 ${
+          isClosing ? 'opacity-0' : 'opacity-100'
+        }`}
         onClick={onClose}
       />
 
