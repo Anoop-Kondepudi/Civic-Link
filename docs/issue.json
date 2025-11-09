@@ -1,6 +1,32 @@
 {
   "reports": [
     {
+      "id": "issue-052",
+      "description": "I got robbed by some gangsters in this area. Please dont visit here.",
+      "location": {
+        "city": "",
+        "state": "",
+        "address": "",
+        "lat": 32.84823380415318,
+        "lng": -96.66383744333578
+      },
+      "timestamp": "2025-11-09T02:45:30.713Z",
+      "status": "open"
+    },
+    {
+      "id": "issue-051",
+      "description": "I got robbed by some gangsters in this area. Please dont visit here.",
+      "location": {
+        "city": "",
+        "state": "",
+        "address": "",
+        "lat": 32.84823380415318,
+        "lng": -96.66383744333578
+      },
+      "timestamp": "2025-11-09T02:45:30.607Z",
+      "status": "open"
+    },
+    {
       "id": "issue-001",
       "description": "Bicycle theft reported near Main Street station. Thief cut through cable lock and fled on foot.",
       "location": {
@@ -47,7 +73,7 @@
         "state": "TX",
         "address": "2600 Main Street, Dallas, TX 75226",
         "lat": 32.7845,
-        "lng": -96.7890
+        "lng": -96.789
       },
       "timestamp": "2025-11-02T07:20:00Z",
       "status": "open"
@@ -59,7 +85,7 @@
         "city": "Dallas",
         "state": "TX",
         "address": "4100 North Beckley Avenue, Dallas, TX 75212",
-        "lat": 32.7520,
+        "lat": 32.752,
         "lng": -96.8234
       },
       "timestamp": "2025-11-02T11:30:00Z",
@@ -72,7 +98,7 @@
         "city": "Dallas",
         "state": "TX",
         "address": "3800 Ross Avenue, Dallas, TX 75204",
-        "lat": 32.7890,
+        "lat": 32.789,
         "lng": -96.7645
       },
       "timestamp": "2025-11-02T15:00:00Z",
@@ -98,7 +124,7 @@
         "city": "Dallas",
         "state": "TX",
         "address": "2400 McKinney Avenue, Dallas, TX 75201",
-        "lat": 32.8090,
+        "lat": 32.809,
         "lng": -96.8001
       },
       "timestamp": "2025-11-03T09:15:00Z",
@@ -125,7 +151,7 @@
         "state": "TX",
         "address": "100 South Akard Street, Dallas, TX 75202",
         "lat": 32.7734,
-        "lng": -96.7890
+        "lng": -96.789
       },
       "timestamp": "2025-11-03T16:30:00Z",
       "status": "open"
