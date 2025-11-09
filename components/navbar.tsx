@@ -1,5 +1,6 @@
 "use client";
-import { Leaf, Menu, User, Mail } from "lucide-react";
+import { Map, Menu, User, Mail } from "lucide-react";
+import { redirect } from "next/navigation";
 
 import {
   Accordion,
@@ -103,9 +104,9 @@ const Navbar = ({
                 className="max-h-8 dark:invert"
                 alt={logo.alt}
               /> */}
-              {/* <div className="bg-primary text-primary-foreground flex size-7 items-center justify-center rounded-md">
-                <Leaf size={20} />
-              </div> */}
+              <div className="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-md">
+                <Map size={20} />
+              </div>
               <span className="font-bold text-lg sm:inline-block">
                 {logo.title}
               </span>
@@ -133,6 +134,14 @@ const Navbar = ({
                     />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Dashboard</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <a href='/admin'>            
+                      <DropdownMenuItem>
+                        Admin
+                      </DropdownMenuItem>
+                    </a>
+                    <DropdownMenuSeparator />
                     <DropdownMenuLabel>Profile</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem disabled>
@@ -145,7 +154,7 @@ const Navbar = ({
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <a href="/auth/logout"  className="text-red-500">
-                      <DropdownMenuItem className="outline-none">
+                      <DropdownMenuItem>
                         Logout
                       </DropdownMenuItem>
                     </a>

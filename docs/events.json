@@ -1,0 +1,74 @@
+{
+  "events": [
+    {
+      "id": "event-001",
+      "title": "City Council Meeting",
+      "description": "Monthly meeting to discuss city planning, traffic updates, and community concerns.",
+      "location": {
+        "city": "Dallas",
+        "state": "TX",
+        "address": "Dallas City Hall, 1500 Marilla St",
+        "lat": 32.7791,
+        "lng": -96.8003
+      },
+      "startTime": "2025-11-12T18:00:00Z",
+      "endTime": "2025-11-12T20:00:00Z"
+    },
+    {
+      "id": "event-002",
+      "title": "Community Park Cleanup",
+      "description": "Join volunteers to clean up the downtown park and plant new trees.",
+      "location": {
+        "city": "Dallas",
+        "state": "TX",
+        "address": "Main Street Park, 500 Main St",
+        "lat": 32.7805,
+        "lng": -96.7907
+      },
+      "startTime": "2025-11-15T09:00:00Z",
+      "endTime": "2025-11-15T12:00:00Z"
+    },
+    {
+      "id": "event-003",
+      "title": "Public Safety Workshop",
+      "description": "Workshop on neighborhood safety, crime prevention tips, and emergency preparedness.",
+      "location": {
+        "city": "Dallas",
+        "state": "TX",
+        "address": "Lakewood Community Center, 1120 Abrams Rd",
+        "lat": 32.8410,
+        "lng": -96.7580
+      },
+      "startTime": "2025-11-20T14:00:00Z",
+      "endTime": "2025-11-20T16:00:00Z"
+    },
+    {
+      "id": "event-004",
+      "title": "Local Farmers Market",
+      "description": "Fresh local produce, handmade crafts, and live music at the farmers market.",
+      "location": {
+        "city": "Dallas",
+        "state": "TX",
+        "address": "Klyde Warren Park, 2012 Woodall Rodgers Fwy",
+        "lat": 32.7870,
+        "lng": -96.8005
+      },
+      "startTime": "2025-11-08T08:00:00Z",
+      "endTime": "2025-11-08T14:00:00Z"
+    },
+    {
+      "id": "event-005",
+      "title": "Neighborhood Town Hall",
+      "description": "Open forum for residents to discuss neighborhood issues and improvements.",
+      "location": {
+        "city": "Dallas",
+        "state": "TX",
+        "address": "Highland Park Library, 3318 Mockingbird Ln",
+        "lat": 32.8330,
+        "lng": -96.7930
+      },
+      "startTime": "2025-11-18T17:30:00Z",
+      "endTime": "2025-11-18T19:30:00Z"
+    }
+  ]
+}

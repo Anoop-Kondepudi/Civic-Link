@@ -16,11 +16,6 @@ const navigation = [
 export function Sidebar() {
   return (
     <div className="flex h-full flex-col gap-4 bg-card border-r border-border p-4">
-      <div className="flex h-14 items-center px-2">
-        <Map className="h-6 w-6 text-primary" />
-        <span className="ml-2 text-lg font-bold">Mapbox MVP</span>
-      </div>
-      <Separator />
       <nav className="flex flex-1 flex-col gap-1">
         {navigation.map((item) => {
           const Icon = item.icon;
