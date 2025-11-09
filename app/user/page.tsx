@@ -124,7 +124,7 @@ export default function UserPage() {
     }, 300);
   };
 
-  const handleSubmitReport = (report: {
+  const handleSubmitReport = async (report: {
     type: "crime" | "construction";
     description: string;
     location: {
@@ -135,13 +135,36 @@ export default function UserPage() {
       lng: number;
     };
   }) => {
-    // TODO: Implement saving to JSON file
-    console.log("New report:", report);
+    console.log("📤 Submitting new report to API:", report);
 
-    // For now, just close the modal and show success
-    handleCloseCreateModal();
+    try {
+      const response = await fetch('/api/reports', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(report),
+      });
 
-    // TODO: Refresh map data to show new marker
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log("✅ Report saved successfully:", data.report);
+        handleCloseCreateModal();
+
+        // Reload the page to show the new marker
+        // In a production app, you'd update the state instead
+        setTimeout(() => {
+          window.location.reload();
+        }, 300);
+      } else {
+        console.error("❌ Failed to save report:", data.error);
+        alert(`Failed to save report: ${data.error}`);
+      }
+    } catch (error) {
+      console.error("❌ Error submitting report:", error);
+      alert("Failed to submit report. Please try again.");
+    }
   };
 
   return (
