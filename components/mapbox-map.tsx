@@ -9,7 +9,7 @@ import civilianEventData from "@/docs/civilian-event.json";
 import governmentEventData from "@/docs/government-event.json";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, ThumbsUp, ThumbsDown } from "lucide-react";
+import { X, ThumbsUp, ThumbsDown, Car, Heart, Leaf, Users, GraduationCap, Filter } from "lucide-react";
 import { MarkerHoverCard } from "@/components/marker-hover-card";
 
 const MAPBOX_TOKEN = "pk.eyJ1IjoiemVsZG9tIiwiYSI6ImNtaHF2czcyeDEyaGcya3B6d3ZvY2hleDkifQ.2BQHylALQUj9cNYDuHijOQ";
@@ -18,6 +18,7 @@ type Report = {
   id: string;
   type?: string;
   description: string;
+  category?: string;
   location: {
     city?: string;
     state?: string;
@@ -31,6 +32,8 @@ type Report = {
   downvotes?: number;
   title?: string;
 };
+
+type Category = "Mobility(Transport)" | "Health" | "Environment" | "Social" | "Education";
 
 interface MapboxMapProps {
   onReportSelect: (report: Report, markerPosition?: { x: number; y: number }) => void;
@@ -51,8 +54,19 @@ export function MapboxMap({ onReportSelect, showPopup = false, onMapClick }: Map
   const [hoveredMarker, setHoveredMarker] = useState<{ report: Report; reportType: string } | null>(null);
   const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null);
   const [userVotes, setUserVotes] = useState<Record<string, 'like' | 'dislike'>>({});
+  const [selectedCategories, setSelectedCategories] = useState<Set<Category>>(new Set(["Mobility(Transport)", "Health", "Environment", "Social", "Education"]));
+  const [showFilterMenu, setShowFilterMenu] = useState(true);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const mapRef = useRef<MapRef>(null);
+
+  // Category styling configuration
+  const categoryConfig: Record<Category, { color: string; icon: any; name: string }> = {
+    "Mobility(Transport)": { color: "#3b82f6", icon: Car, name: "Infrastructure" }, // Blue
+    "Health": { color: "#ef4444", icon: Heart, name: "Health" }, // Red
+    "Environment": { color: "#10b981", icon: Leaf, name: "Environment" }, // Green
+    "Social": { color: "#f59e0b", icon: Users, name: "Social" }, // Amber
+    "Education": { color: "#8b5cf6", icon: GraduationCap, name: "Education" }, // Purple
+  };
 
   // Load votes from localStorage on mount
   useEffect(() => {
@@ -261,8 +275,32 @@ export function MapboxMap({ onReportSelect, showPopup = false, onMapClick }: Map
     return firstSentence.length > 50 ? firstSentence.substring(0, 50) + '...' : firstSentence;
   };
 
+  // Toggle category filter
+  const toggleCategory = (category: Category) => {
+    setSelectedCategories(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(category)) {
+        newSet.delete(category);
+      } else {
+        newSet.add(category);
+      }
+      return newSet;
+    });
+  };
+
+  // Get category for an issue
+  const getIssueCategory = (report: Report): Category => {
+    return (report.category as Category) || "Environment";
+  };
+
+  // Check if issue should be displayed based on filter
+  const shouldDisplayIssue = (report: Report): boolean => {
+    const category = getIssueCategory(report);
+    return selectedCategories.has(category);
+  };
+
   return (
-    <div className="w-full h-full rounded-lg overflow-hidden border border-border shadow-lg">
+    <div className="w-full h-full rounded-lg overflow-hidden border border-border shadow-lg relative">
       <Map
         ref={mapRef}
         {...viewState}
@@ -293,10 +331,14 @@ export function MapboxMap({ onReportSelect, showPopup = false, onMapClick }: Map
         mapboxAccessToken={MAPBOX_TOKEN}
         style={{ width: "100%", height: "100%" }}
       >
-        {/* Issue Markers - Red 🔴 */}
-        {issueData.reports.map((report: Report) => {
+        {/* Issue Markers - Categorized by Color and Icon */}
+        {issueData.reports.filter(shouldDisplayIssue).map((report: Report) => {
           const reportWithType = { ...report, type: "issue" };
           const userVote = userVotes[report.id];
+          const category = getIssueCategory(report);
+          const config = categoryConfig[category];
+          const IconComponent = config.icon;
+          
           return (
             <Marker
               key={report.id}
@@ -309,33 +351,35 @@ export function MapboxMap({ onReportSelect, showPopup = false, onMapClick }: Map
             >
               <div className="relative">
                 <div
-                  className="cursor-pointer hover:scale-110 transition-transform"
+                  className="cursor-pointer hover:scale-110 transition-transform flex items-center justify-center"
                   style={{
-                    width: "20px",
-                    height: "20px",
+                    width: "32px",
+                    height: "32px",
                     borderRadius: "50%",
-                    backgroundColor: "#ef4444",
+                    backgroundColor: config.color,
                     border: "2px solid #ffffff",
-                    boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
+                    boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
                   }}
                   onMouseEnter={() => handleMarkerHover(reportWithType, "issue")}
                   onMouseLeave={handleMarkerLeave}
-                />
+                >
+                  <IconComponent className="h-4 w-4 text-white" />
+                </div>
                 {userVote && (
                   <div
-                    className="absolute -top-3 -right-3 rounded-full flex items-center justify-center animate-in zoom-in duration-200"
+                    className="absolute -top-2 -right-2 rounded-full flex items-center justify-center animate-in zoom-in duration-200"
                     style={{
-                      width: "24px",
-                      height: "24px",
+                      width: "20px",
+                      height: "20px",
                       backgroundColor: userVote === 'like' ? '#22c55e' : '#ef4444',
                       border: "2px solid #ffffff",
                       boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
                     }}
                   >
                     {userVote === 'like' ? (
-                      <ThumbsUp className="h-3.5 w-3.5 text-white fill-white" />
+                      <ThumbsUp className="h-3 w-3 text-white fill-white" />
                     ) : (
-                      <ThumbsDown className="h-3.5 w-3.5 text-white fill-white" />
+                      <ThumbsDown className="h-3 w-3 text-white fill-white" />
                     )}
                   </div>
                 )}
@@ -344,8 +388,8 @@ export function MapboxMap({ onReportSelect, showPopup = false, onMapClick }: Map
           );
         })}
 
-        {/* Idea Markers - Blue 💡 */}
-        {ideaData.reports.map((report: Report) => {
+        {/* Idea Markers - Blue 💡 - HIDDEN */}
+        {false && ideaData.reports.map((report: Report) => {
           const reportWithType = { ...report, type: "idea" };
           const userVote = userVotes[report.id];
           return (
@@ -395,8 +439,8 @@ export function MapboxMap({ onReportSelect, showPopup = false, onMapClick }: Map
           );
         })}
 
-        {/* Civilian Event Markers - Green 👥 */}
-        {civilianEventData.reports.map((report: Report) => {
+        {/* Civilian Event Markers - Green 👥 - HIDDEN */}
+        {false && civilianEventData.reports.map((report: Report) => {
           const reportWithType = { ...report, type: "civilian-event" };
           const userVote = userVotes[report.id];
           return (
@@ -446,8 +490,8 @@ export function MapboxMap({ onReportSelect, showPopup = false, onMapClick }: Map
           );
         })}
 
-        {/* Government Event Markers - Purple 🏛️ */}
-        {governmentEventData.reports.map((report: Report) => {
+        {/* Government Event Markers - Purple 🏛️ - HIDDEN */}
+        {false && governmentEventData.reports.map((report: Report) => {
           const reportWithType = { ...report, type: "government-event" };
           const userVote = userVotes[report.id];
           return (
@@ -501,6 +545,77 @@ export function MapboxMap({ onReportSelect, showPopup = false, onMapClick }: Map
         <GeolocateControl position="top-right" />
         <ScaleControl />
       </Map>
+
+      {/* Category Filter Toggle Button - Positioned on Map */}
+      <div className="absolute top-4 left-4 pointer-events-auto" style={{ zIndex: 1000 }}>
+        <Button
+          variant="default"
+          size="icon"
+          onClick={() => setShowFilterMenu(!showFilterMenu)}
+          className="shadow-lg"
+        >
+          <Filter className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {/* Category Filter Menu - Positioned on Map */}
+      {showFilterMenu && (
+        <div className="absolute top-16 left-4 pointer-events-auto" style={{ zIndex: 1000 }}>
+          <Card className="shadow-lg border-border">
+            <CardContent className="p-4 space-y-2">
+              <div className="font-semibold mb-3 text-sm">Filter by Category</div>
+              {(Object.entries(categoryConfig) as [Category, typeof categoryConfig[Category]][]).map(([category, config]) => {
+                const IconComponent = config.icon;
+                const isSelected = selectedCategories.has(category);
+                return (
+                  <button
+                    key={category}
+                    onClick={() => toggleCategory(category)}
+                    className={`w-full flex items-center gap-2 p-2 rounded-md transition-all ${
+                      isSelected 
+                        ? 'bg-primary/10 border-2 border-primary' 
+                        : 'bg-muted border-2 border-transparent opacity-50 hover:opacity-75'
+                    }`}
+                  >
+                    <div
+                      className="flex items-center justify-center rounded-full"
+                      style={{
+                        width: "24px",
+                        height: "24px",
+                        backgroundColor: config.color,
+                        opacity: isSelected ? 1 : 0.5,
+                      }}
+                    >
+                      <IconComponent className="h-3.5 w-3.5 text-white" />
+                    </div>
+                    <span className={`text-sm ${isSelected ? 'font-medium' : 'font-normal'}`}>
+                      {config.name}
+                    </span>
+                  </button>
+                );
+              })}
+              <div className="pt-2 mt-2 border-t border-border flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedCategories(new Set(Object.keys(categoryConfig) as Category[]))}
+                  className="flex-1 text-xs"
+                >
+                  Select All
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedCategories(new Set())}
+                  className="flex-1 text-xs"
+                >
+                  Clear All
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Custom Styled Popup with Animation */}
       {showPopup && popupInfo && popupPosition && (() => {

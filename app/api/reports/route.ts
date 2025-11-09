@@ -42,6 +42,43 @@ function checkForNearbyDuplicates(
   return null;
 }
 
+// Helper function to categorize issue using AI
+async function categorizeIssue(description: string): Promise<string> {
+  try {
+    const messages: ChatCompletionMessageParam[] = [
+      {
+        role: "system",
+        content: "You are a civic issue categorization assistant. Categorize issues into EXACTLY ONE of these categories: Infrastructure, Health, Environment, Social, Education. Respond with ONLY the category name, nothing else."
+      },
+      {
+        role: "user",
+        content: `Categorize this civic issue into one of these categories: Infrastructure, Health, Environment, Social, Education.\n\nIssue: "${description}"\n\nRespond with ONLY the category name.`
+      }
+    ];
+
+    const completion = await openai.chat.completions.create({
+      model: "nvidia/nemotron-nano-12b-v2-vl",
+      messages: messages,
+      max_tokens: 50,
+      temperature: 0.3,
+      stream: false
+    });
+
+    const category = completion.choices[0]?.message?.content?.trim() || 'Environment';
+    
+    // Validate and normalize the category
+    const validCategories = ['Infrastructure', 'Health', 'Environment', 'Social', 'Education'];
+    const normalizedCategory = validCategories.find(cat => 
+      category.toLowerCase().includes(cat.toLowerCase())
+    );
+    
+    return normalizedCategory || 'Environment'; // Default to Environment if unclear
+  } catch (error) {
+    console.error('Error categorizing issue:', error);
+    return 'Environment'; // Default category on error
+  }
+}
+
 // Helper function to enhance user-provided description with AI
 async function enhanceDescription(description: string, reportType: string): Promise<string> {
   try {
@@ -158,6 +195,7 @@ export async function POST(request: NextRequest) {
 
     // Process description: enhance if provided, generate from image if not
     let finalDescription = description;
+    let category: string | undefined = undefined;
     
     if (!finalDescription && images && images.length > 0) {
       // No description provided - generate from image
@@ -174,6 +212,13 @@ export async function POST(request: NextRequest) {
       console.log('✏️ Enhancing user-provided description...');
       finalDescription = await enhanceDescription(finalDescription, type);
       console.log('✨ Enhanced description:', finalDescription);
+    }
+
+    // Categorize issues using AI
+    if (type === 'issue') {
+      console.log('🔖 Categorizing issue...');
+      category = await categorizeIssue(finalDescription);
+      console.log('✅ Category:', category);
     }
 
     // Determine which JSON file to update
@@ -236,6 +281,8 @@ export async function POST(request: NextRequest) {
       },
       timestamp: new Date().toISOString(),
       status: 'open',
+      // Add category for issues
+      ...(type === 'issue' && category && { category }),
       // Include images if provided
       ...(images && images.length > 0 && { 
         images: images.map((img: any) => ({
