@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
-import Map, { Marker, NavigationControl, ScaleControl, GeolocateControl, MapRef } from "react-map-gl/mapbox";
+import Map, { Marker, NavigationControl, ScaleControl, GeolocateControl, MapRef, Source, Layer } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
 import Supercluster from "supercluster";
 import issueData from "@/docs/issue.json";
@@ -10,7 +10,7 @@ import civilianEventData from "@/docs/civilian-event.json";
 import governmentEventData from "@/docs/government-event.json";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, ThumbsUp, ThumbsDown } from "lucide-react";
+import { X, ThumbsUp, ThumbsDown, Layers } from "lucide-react";
 import { ClusterMarker } from "@/components/cluster-marker";
 import { MapFilterLegend } from "@/components/map-filter-legend";
 import { MarkerHoverCard } from "@/components/marker-hover-card";
@@ -46,14 +46,37 @@ type Report = {
   title?: string;
 };
 
+export interface HeatmapPoint {
+  lat: number;
+  lng: number;
+  intensity: number;
+  breakdown: {
+    issues: number;
+    ideas: number;
+    civilianEvents: number;
+    governmentEvents: number;
+  };
+}
+
 interface MapboxMapProps {
   onReportSelect: (report: Report, markerPosition?: { x: number; y: number }) => void;
   showPopup?: boolean;
   onMapClick?: (location: { lat: number; lng: number; x: number; y: number }) => void;
   announcements?: Announcement[];
+  heatmapData?: HeatmapPoint[];
+  initialShowHeatmap?: boolean;
+  showFilters?: boolean;
 }
 
-export function MapboxMap({ onReportSelect, showPopup = false, onMapClick, announcements = [] }: MapboxMapProps) {
+export function MapboxMap({
+  onReportSelect,
+  showPopup = false,
+  onMapClick,
+  announcements = [],
+  heatmapData = [],
+  initialShowHeatmap = false,
+  showFilters = true
+}: MapboxMapProps) {
   const [viewState, setViewState] = useState({
     longitude: -96.80,
     latitude: 32.78,
@@ -66,6 +89,7 @@ export function MapboxMap({ onReportSelect, showPopup = false, onMapClick, annou
   const [hoveredMarker, setHoveredMarker] = useState<{ report: Report; reportType: string } | null>(null);
   const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null);
   const [userVotes, setUserVotes] = useState<Record<string, 'like' | 'dislike'>>({});
+  const [showHeatmap, setShowHeatmap] = useState(initialShowHeatmap);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const mapRef = useRef<MapRef>(null);
 
@@ -163,6 +187,35 @@ export function MapboxMap({ onReportSelect, showPopup = false, onMapClick, annou
       Math.floor(viewState.zoom)
     );
   }, [supercluster, viewState.zoom, viewState.latitude, viewState.longitude]);
+
+  // Convert heatmap data to GeoJSON format for Mapbox
+  const heatmapGeoJSON = useMemo(() => {
+    if (!heatmapData || heatmapData.length === 0) {
+      return {
+        type: 'FeatureCollection' as const,
+        features: []
+      };
+    }
+
+    return {
+      type: 'FeatureCollection' as const,
+      features: heatmapData.map((point, index) => ({
+        type: 'Feature' as const,
+        id: index,
+        geometry: {
+          type: 'Point' as const,
+          coordinates: [point.lng, point.lat]
+        },
+        properties: {
+          intensity: point.intensity,
+          issues: point.breakdown.issues,
+          ideas: point.breakdown.ideas,
+          civilianEvents: point.breakdown.civilianEvents,
+          governmentEvents: point.breakdown.governmentEvents
+        }
+      }))
+    };
+  }, [heatmapData]);
 
   const closePopup = useCallback(() => {
     setIsPopupClosing(true);
@@ -358,13 +411,30 @@ export function MapboxMap({ onReportSelect, showPopup = false, onMapClick, annou
   return (
     <div className="w-full h-full rounded-lg overflow-hidden border border-border shadow-lg relative">
       {/* Category Filter Legend */}
-      <div className="absolute top-4 left-4 z-10">
-        <MapFilterLegend
-          filters={categoryFilters}
-          onFilterChange={handleFilterChange}
-          categoryCounts={categoryCounts}
-        />
-      </div>
+      {showFilters && (
+        <div className="absolute top-4 left-4 z-10">
+          <MapFilterLegend
+            filters={categoryFilters}
+            onFilterChange={handleFilterChange}
+            categoryCounts={categoryCounts}
+          />
+        </div>
+      )}
+
+      {/* Heatmap Toggle Button */}
+      {heatmapData && heatmapData.length > 0 && (
+        <div className="absolute top-4 right-14 z-10">
+          <Button
+            onClick={() => setShowHeatmap(!showHeatmap)}
+            variant={showHeatmap ? "default" : "secondary"}
+            size="sm"
+            className="shadow-lg"
+          >
+            <Layers className="h-4 w-4 mr-2" />
+            {showHeatmap ? "Markers" : "Heatmap"}
+          </Button>
+        </div>
+      )}
 
       <Map
         ref={mapRef}
@@ -396,8 +466,63 @@ export function MapboxMap({ onReportSelect, showPopup = false, onMapClick, annou
         mapboxAccessToken={MAPBOX_TOKEN}
         style={{ width: "100%", height: "100%" }}
       >
-        {/* Render clusters and individual markers */}
-        {clusters.map((cluster) => {
+        {/* Heatmap Layer */}
+        {showHeatmap && heatmapGeoJSON.features.length > 0 && (
+          <Source
+            id="heatmap-source"
+            type="geojson"
+            data={heatmapGeoJSON}
+          >
+            <Layer
+              id="heatmap-layer"
+              type="heatmap"
+              paint={{
+                // Heatmap weight based on intensity property
+                'heatmap-weight': [
+                  'interpolate',
+                  ['linear'],
+                  ['get', 'intensity'],
+                  0, 0,
+                  20, 1
+                ],
+                // Color ramp for heatmap (blue -> cyan -> yellow -> orange -> red)
+                'heatmap-color': [
+                  'interpolate',
+                  ['linear'],
+                  ['heatmap-density'],
+                  0, 'rgba(33,102,172,0)',      // transparent blue
+                  0.2, 'rgb(103,169,207)',       // light blue
+                  0.4, 'rgb(209,229,240)',       // cyan
+                  0.6, 'rgb(253,219,199)',       // light orange
+                  0.8, 'rgb(239,138,98)',        // orange
+                  1, 'rgb(178,24,43)'            // red
+                ],
+                // Adjust radius by zoom level (bigger as you zoom in)
+                'heatmap-radius': [
+                  'interpolate',
+                  ['linear'],
+                  ['zoom'],
+                  0, 2,
+                  9, 20,
+                  14, 30
+                ],
+                // Heatmap intensity
+                'heatmap-intensity': [
+                  'interpolate',
+                  ['linear'],
+                  ['zoom'],
+                  0, 1,
+                  9, 3
+                ],
+                // Opacity
+                'heatmap-opacity': 0.8
+              }}
+            />
+          </Source>
+        )}
+
+        {/* Render clusters and individual markers (hidden when heatmap is active) */}
+        {!showHeatmap && clusters.map((cluster) => {
           const [longitude, latitude] = cluster.geometry.coordinates;
           const properties = cluster.properties;
 
@@ -468,8 +593,8 @@ export function MapboxMap({ onReportSelect, showPopup = false, onMapClick, annou
           }
         })}
 
-        {/* Render announcement markers */}
-        {announcements.filter(a => a.location).map((announcement) => (
+        {/* Render announcement markers (hidden when heatmap is active) */}
+        {!showHeatmap && announcements.filter(a => a.location).map((announcement) => (
           <Marker
             key={announcement.id}
             longitude={announcement.location!.lng}

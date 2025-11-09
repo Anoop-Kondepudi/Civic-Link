@@ -6,6 +6,7 @@ import { StatCards } from "@/components/stat-cards";
 import { DataTable } from "@/components/data-table";
 import { AnalyticsOverview } from "@/components/analytics-overview";
 import { AnnouncementsManagement } from "@/components/announcements-management";
+import { AIAnalytics } from "@/components/ai-analytics";
 import { useState } from "react";
 
 type Report = {
@@ -90,15 +91,12 @@ export default function AdminPage() {
         return (
           <>
             <div className="mb-6">
-              <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
+              <h1 className="text-3xl font-bold tracking-tight">AI-Powered Analytics</h1>
               <p className="text-muted-foreground mt-1">
-                Detailed insights and metrics
+                Comprehensive city health analysis and insights powered by AI
               </p>
             </div>
-            <StatCards />
-            <div className="mt-6">
-              <AnalyticsOverview selectedReport={null} />
-            </div>
+            <AIAnalytics />
           </>
         );
 

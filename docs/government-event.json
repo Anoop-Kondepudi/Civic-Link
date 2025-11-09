@@ -167,7 +167,8 @@
         "lng": -96.7923
       },
       "timestamp": "2025-11-13T18:00:00Z",
-      "status": "open"
+      "status": "open",
+      "downvotes": 1
     },
     {
       "id": "gov-event-014",

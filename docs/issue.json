@@ -619,7 +619,8 @@
         "lng": -96.8056
       },
       "timestamp": "2025-11-10T16:00:00Z",
-      "status": "open"
+      "status": "open",
+      "votes": 1
     },
     {
       "id": "issue-040",
