@@ -5,6 +5,8 @@ import { MapboxMap } from "@/components/mapbox-map";
 import { ReportModal } from "@/components/report-modal";
 import { MapClickPopup } from "@/components/map-click-popup";
 import { CreateReportModal } from "@/components/create-report-modal";
+import { AnnouncementsDropdown, Announcement } from "@/components/announcements-dropdown";
+import eventsData from "@/docs/events.json";
 
 type Report = {
   id: string;
@@ -34,6 +36,7 @@ export default function UserPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isCreateModalClosing, setIsCreateModalClosing] = useState(false);
   const [canClosePopup, setCanClosePopup] = useState(false);
+  const [showAnnouncements, setShowAnnouncements] = useState(false);
 
   const handleReportSelect = (report: Report, position?: { x: number; y: number }) => {
     // Close any open create popups first
@@ -168,25 +171,29 @@ export default function UserPage() {
   };
 
 
+  const events: Announcement[] = eventsData.events;
   return (
     <div className="flex flex-col h-screen bg-background">
       {/* Header */}
-      <header className="border-b bg-card px-6 py-4">
+      <header className="border-b bg-card px-6 py-4 flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Civic Link</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            View community reports in your area
+            View community reports and city announcements in your area
           </p>
         </div>
+        <AnnouncementsDropdown announcements={events} onToggle={setShowAnnouncements}/>
       </header>
+
 
       {/* Map - Full screen below header */}
       <main className="flex-1 p-4">
         <div className="h-full w-full">
           <MapboxMap
-            onReportSelect={handleReportSelect}
-            showPopup={true}
-            onMapClick={handleMapClick}
+              onReportSelect={handleReportSelect}
+              showPopup={true}
+              onMapClick={handleMapClick}
+              announcements={showAnnouncements ? events : []}
           />
         </div>
       </main>
