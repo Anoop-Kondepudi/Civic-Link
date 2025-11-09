@@ -155,3 +155,58 @@ export async function GET() {
     );
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "Announcement ID is required" },
+        { status: 400 }
+      );
+    }
+
+    // Read existing announcements
+    const announcementsPath = path.join(process.cwd(), "docs", "announcements.json");
+    const announcementsData = JSON.parse(fs.readFileSync(announcementsPath, "utf-8"));
+
+    // Find announcement to delete
+    const announcementIndex = announcementsData.announcements.findIndex(
+      (a: any) => a.id === id
+    );
+
+    if (announcementIndex === -1) {
+      return NextResponse.json(
+        { error: "Announcement not found" },
+        { status: 404 }
+      );
+    }
+
+    const announcement = announcementsData.announcements[announcementIndex];
+
+    // Delete PDF file
+    const pdfPath = path.join(process.cwd(), "public", "announcements", announcement.pdfFileName);
+    if (fs.existsSync(pdfPath)) {
+      fs.unlinkSync(pdfPath);
+    }
+
+    // Remove announcement from array
+    announcementsData.announcements.splice(announcementIndex, 1);
+
+    // Save updated announcements
+    fs.writeFileSync(announcementsPath, JSON.stringify(announcementsData, null, 2));
+
+    return NextResponse.json({
+      success: true,
+      message: "Announcement deleted successfully",
+    });
+  } catch (error) {
+    console.error("Error deleting announcement:", error);
+    return NextResponse.json(
+      { error: "Failed to delete announcement" },
+      { status: 500 }
+    );
+  }
+}
