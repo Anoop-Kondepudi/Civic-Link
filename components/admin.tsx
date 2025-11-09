@@ -9,16 +9,19 @@ import { useState } from "react";
 
 type Report = {
   id: string;
+  type?: string;
   description: string;
   location: {
-    city: string;
-    state: string;
-    address: string;
+    city?: string;
+    state?: string;
+    address?: string;
     lat: number;
     lng: number;
   };
   timestamp: string;
   status: string;
+  votes?: number;
+  title?: string;
 };
 
 export default function AdminPage() {

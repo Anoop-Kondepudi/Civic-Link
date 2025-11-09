@@ -1,11 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { X, ShieldAlert, Lightbulb, Users, Building2, MapPin } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { X, ShieldAlert, Lightbulb, Users, Building2, MapPin, ImagePlus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+
+interface ImageData {
+  file: File;
+  preview: string;
+}
 
 interface CreateReportModalProps {
   isOpen: boolean;
@@ -16,53 +21,121 @@ interface CreateReportModalProps {
     type: "issue" | "idea" | "civilian-event" | "government-event";
     description: string;
     location: {
-      address: string;
-      city: string;
-      state: string;
       lat: number;
       lng: number;
     };
+    images?: File[];
   }) => void;
 }
 
 export function CreateReportModal({ isOpen, isClosing = false, onClose, location, onSubmit }: CreateReportModalProps) {
   const [reportType, setReportType] = useState<"issue" | "idea" | "civilian-event" | "government-event">("issue");
   const [description, setDescription] = useState("");
+  const [images, setImages] = useState<ImageData[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Reset form when modal closes
   useEffect(() => {
     if (!isOpen) {
       setReportType("issue");
       setDescription("");
+      setImages([]);
+      setIsUploading(false);
+      setIsSubmitting(false);
     }
   }, [isOpen]);
 
-  const handleSubmit = () => {
-    if (!description.trim() || !location) return;
+  // Handle image file selection
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+
+    try {
+      const newImages: ImageData[] = [];
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          alert(`File ${file.name} is not an image`);
+          continue;
+        }
+
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          alert(`File ${file.name} is too large. Maximum size is 5MB`);
+          continue;
+        }
+
+        // Create preview URL (just for display, not for upload)
+        const preview = URL.createObjectURL(file);
+
+        newImages.push({
+          file: file,
+          preview: preview
+        });
+      }
+
+      setImages(prev => [...prev, ...newImages]);
+    } catch (error) {
+      console.error('Error processing images:', error);
+      alert('Failed to process images. Please try again.');
+    } finally {
+      setIsUploading(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  // Remove an image
+  const handleRemoveImage = (index: number) => {
+    setImages(prev => {
+      const newImages = [...prev];
+      // Revoke object URL to prevent memory leaks
+      URL.revokeObjectURL(newImages[index].preview);
+      newImages.splice(index, 1);
+      return newImages;
+    });
+  };
+
+  const handleSubmit = async () => {
+    if ((!description.trim() && images.length === 0) || !location || isSubmitting) return;
+
+    setIsSubmitting(true);
 
     console.log("📤 Submitting report:", {
       type: reportType,
       description: description.trim(),
+      images: images.length,
       location: {
-        address: "",
-        city: "",
-        state: "",
         lat: location.lat,
         lng: location.lng,
       },
     });
 
+    // Start the submission process
     onSubmit({
       type: reportType,
       description: description.trim(),
       location: {
-        address: "", // Empty - to be filled manually in JSON
-        city: "",    // Empty - to be filled manually in JSON
-        state: "",   // Empty - to be filled manually in JSON
         lat: location.lat,
         lng: location.lng,
       },
+      images: images.length > 0 ? images.map(img => img.file) : undefined,
     });
+
+    // Close modal immediately after triggering submission
+    // The parent component will handle the actual API call in the background
+    setTimeout(() => {
+      onClose();
+    }, 300);
   };
 
   if (!isOpen || !location) {
@@ -104,7 +177,7 @@ export function CreateReportModal({ isOpen, isClosing = false, onClose, location
   const borderColor = config.border;
   const ReportIcon = config.icon;
 
-  const canSubmit = description.trim().length > 0;
+  const canSubmit = description.trim().length > 0 || images.length > 0;
 
   return (
     <>
@@ -191,7 +264,7 @@ export function CreateReportModal({ isOpen, isClosing = false, onClose, location
             {/* Description */}
             <div>
               <Label htmlFor="description" className="text-sm font-semibold text-foreground/80 mb-2 block">
-                Description
+                Description {images.length > 0 && <span className="text-muted-foreground font-normal">(optional with images)</span>}
               </Label>
               <Textarea
                 id="description"
@@ -202,8 +275,64 @@ export function CreateReportModal({ isOpen, isClosing = false, onClose, location
               />
             </div>
 
-            {/* Location */}
+            {/* Image Upload */}
             <div>
+              <Label className="text-sm font-semibold text-foreground/80 mb-2 block">
+                Images {description.trim() && <span className="text-muted-foreground font-normal">(optional)</span>}
+              </Label>
+              
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleImageSelect}
+                className="hidden"
+              />
+              
+              {/* Upload button */}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="w-full mb-3"
+              >
+                <ImagePlus className="h-4 w-4 mr-2" />
+                {isUploading ? "Processing..." : "Attach Images"}
+              </Button>
+
+              {/* Image previews */}
+              {images.length > 0 && (
+                <div className="grid grid-cols-2 gap-3">
+                  {images.map((image, index) => (
+                    <div key={index} className="relative group">
+                      <img
+                        src={image.preview}
+                        alt={image.file.name}
+                        className="w-full h-32 object-cover rounded-lg border border-border"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => handleRemoveImage(index)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                      <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs p-1 rounded-b-lg truncate">
+                        {image.file.name}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Location */}
+            {/* <div>
               <Label className="text-sm font-semibold text-foreground/80 mb-2 flex items-center gap-2">
                 <MapPin className="h-4 w-4" />
                 Location
@@ -216,19 +345,27 @@ export function CreateReportModal({ isOpen, isClosing = false, onClose, location
                   Longitude: {location.lng.toFixed(6)}
                 </p>
               </div>
-            </div>
+            </div> */}
           </div>
 
           {/* Footer */}
           <div className="border-t p-4 flex justify-end gap-2">
-            <Button variant="outline" onClick={onClose}>
+            <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
               Cancel
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={!canSubmit}
+              disabled={!canSubmit || isSubmitting}
+              className="min-w-[140px]"
             >
-              Submit Report
+              {isSubmitting ? (
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
+                  Submitting...
+                </>
+              ) : (
+                "Submit Report"
+              )}
             </Button>
           </div>
         </div>

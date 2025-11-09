@@ -10,6 +10,7 @@ import governmentEventData from "@/docs/government-event.json";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
+import { MarkerHoverCard } from "@/components/marker-hover-card";
 
 const MAPBOX_TOKEN = "pk.eyJ1IjoiemVsZG9tIiwiYSI6ImNtaHF2czcyeDEyaGcya3B6d3ZvY2hleDkifQ.2BQHylALQUj9cNYDuHijOQ";
 
@@ -18,14 +19,16 @@ type Report = {
   type?: string;
   description: string;
   location: {
-    city: string;
-    state: string;
-    address: string;
+    city?: string;
+    state?: string;
+    address?: string;
     lat: number;
     lng: number;
   };
   timestamp: string;
   status: string;
+  votes?: number;
+  title?: string;
 };
 
 interface MapboxMapProps {
@@ -44,6 +47,9 @@ export function MapboxMap({ onReportSelect, showPopup = false, onMapClick }: Map
   const [popupInfo, setPopupInfo] = useState<Report | null>(null);
   const [popupPosition, setPopupPosition] = useState<{ x: number; y: number } | null>(null);
   const [isPopupClosing, setIsPopupClosing] = useState(false);
+  const [hoveredMarker, setHoveredMarker] = useState<{ report: Report; reportType: string } | null>(null);
+  const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const mapRef = useRef<MapRef>(null);
 
   const closePopup = useCallback(() => {
@@ -101,6 +107,87 @@ export function MapboxMap({ onReportSelect, showPopup = false, onMapClick }: Map
     }
   };
 
+  const handleMarkerHover = (report: Report, reportType: string) => {
+    // Clear any pending timeout
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+
+    const markerPosition = getMarkerScreenPosition(report.location.lat, report.location.lng);
+    if (markerPosition) {
+      setHoveredMarker({ report, reportType });
+      setHoverPosition(markerPosition);
+    }
+  };
+
+  const handleMarkerLeave = () => {
+    // Delay closing to allow mouse to move to the hover card
+    hoverTimeoutRef.current = setTimeout(() => {
+      setHoveredMarker(null);
+      setHoverPosition(null);
+    }, 300);
+  };
+
+  const cancelHoverClose = () => {
+    // Cancel the close timeout when mouse enters the hover card
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+  };
+
+  const handleHoverCardClose = () => {
+    // Immediately close without timeout
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    setHoveredMarker(null);
+    setHoverPosition(null);
+  };
+
+  const handleLike = async () => {
+    if (!hoveredMarker) return;
+    
+    try {
+      const response = await fetch(`/api/reports/${hoveredMarker.report.id}/vote`, { 
+        method: 'POST' 
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Vote successful! New vote count:", data.votes);
+        
+        // Show success toast
+        const toastDiv = document.createElement('div');
+        toastDiv.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+        toastDiv.textContent = '👍 Vote recorded!';
+        document.body.appendChild(toastDiv);
+        setTimeout(() => toastDiv.remove(), 2000);
+      }
+      handleHoverCardClose();
+    } catch (error) {
+      console.error("Error voting:", error);
+    }
+  };
+
+  const handleDislike = () => {
+    if (!hoveredMarker) return;
+    
+    // Close hover card and trigger new report creation with nearby location
+    const report = hoveredMarker.report;
+    const position = hoverPosition;
+    handleHoverCardClose();
+    onReportSelect(report, position || undefined);
+  };
+
+  // Generate title from description (first 50 chars or until first period)
+  const generateTitle = (description: string): string => {
+    const firstSentence = description.split('.')[0];
+    return firstSentence.length > 50 ? firstSentence.substring(0, 50) + '...' : firstSentence;
+  };
+
   return (
     <div className="w-full h-full rounded-lg overflow-hidden border border-border shadow-lg">
       <Map
@@ -156,6 +243,8 @@ export function MapboxMap({ onReportSelect, showPopup = false, onMapClick }: Map
                   border: "2px solid #ffffff",
                   boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
                 }}
+                onMouseEnter={() => handleMarkerHover(reportWithType, "issue")}
+                onMouseLeave={handleMarkerLeave}
               />
             </Marker>
           );
@@ -184,6 +273,8 @@ export function MapboxMap({ onReportSelect, showPopup = false, onMapClick }: Map
                   border: "2px solid #ffffff",
                   boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
                 }}
+                onMouseEnter={() => handleMarkerHover(reportWithType, "idea")}
+                onMouseLeave={handleMarkerLeave}
               />
             </Marker>
           );
@@ -212,6 +303,8 @@ export function MapboxMap({ onReportSelect, showPopup = false, onMapClick }: Map
                   border: "2px solid #ffffff",
                   boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
                 }}
+                onMouseEnter={() => handleMarkerHover(reportWithType, "civilian-event")}
+                onMouseLeave={handleMarkerLeave}
               />
             </Marker>
           );
@@ -240,6 +333,8 @@ export function MapboxMap({ onReportSelect, showPopup = false, onMapClick }: Map
                   border: "2px solid #ffffff",
                   boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
                 }}
+                onMouseEnter={() => handleMarkerHover(reportWithType, "government-event")}
+                onMouseLeave={handleMarkerLeave}
               />
             </Marker>
           );
@@ -353,6 +448,24 @@ export function MapboxMap({ onReportSelect, showPopup = false, onMapClick }: Map
           </div>
         );
       })()}
+
+      {/* Hover Card */}
+      {hoveredMarker && hoverPosition && (
+        <div
+          onMouseEnter={cancelHoverClose}
+          onMouseLeave={handleMarkerLeave}
+        >
+          <MarkerHoverCard
+            title={hoveredMarker.report.title || generateTitle(hoveredMarker.report.description)}
+            votes={hoveredMarker.report.votes || 0}
+            reportType={hoveredMarker.reportType}
+            onLike={handleLike}
+            onDislike={handleDislike}
+            onClose={handleHoverCardClose}
+            position={hoverPosition}
+          />
+        </div>
+      )}
     </div>
   );
 }

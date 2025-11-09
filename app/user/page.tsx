@@ -11,14 +11,26 @@ type Report = {
   type?: string;
   description: string;
   location: {
-    city: string;
-    state: string;
-    address: string;
+    city?: string;
+    state?: string;
+    address?: string;
     lat: number;
     lng: number;
   };
   timestamp: string;
   status: string;
+  votes?: number;
+  title?: string;
+};
+
+// Helper function to convert File to base64
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = error => reject(error);
+  });
 };
 
 export default function UserPage() {
@@ -128,43 +140,93 @@ export default function UserPage() {
     type: "issue" | "idea" | "civilian-event" | "government-event";
     description: string;
     location: {
-      address: string;
-      city: string;
-      state: string;
       lat: number;
       lng: number;
     };
+    images?: File[];
   }) => {
-    console.log("📤 Submitting new report to API:", report);
+    console.log("📤 Starting background submission of report...");
 
-    try {
+    // Process submission in the background (non-blocking)
+    (async () => {
+      try {
+        // Convert File objects to base64 for backend processing
+        let processedImages;
+        if (report.images && report.images.length > 0) {
+        console.log("� Converting images to base64...");
+        processedImages = await Promise.all(
+          report.images.map(async (file) => {
+            const base64 = await fileToBase64(file);
+            return {
+              base64: base64.split(',')[1], // Remove data:image/...;base64, prefix
+              mimeType: file.type,
+              name: file.name
+            };
+          })
+        );
+        console.log(`✅ Converted ${processedImages.length} images`);
+      }
+
       const response = await fetch('/api/reports', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(report),
+        body: JSON.stringify({
+          ...report,
+          images: processedImages
+        }),
       });
 
       const data = await response.json();
 
-      if (response.ok) {
-        console.log("✅ Report saved successfully:", data.report);
-        handleCloseCreateModal();
-
-        // Reload the page to show the new marker
-        // In a production app, you'd update the state instead
-        setTimeout(() => {
-          window.location.reload();
-        }, 300);
+        if (response.ok) {
+          console.log("✅ Report saved successfully:", data.report);
+          
+          // Show success toast
+          const toastDiv = document.createElement('div');
+          toastDiv.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+          toastDiv.textContent = '✅ Report submitted successfully!';
+          document.body.appendChild(toastDiv);
+          setTimeout(() => toastDiv.remove(), 3000);
+          
+          // Reload page after 3 seconds
+          setTimeout(() => window.location.reload(), 3000);
+        } else if (response.status === 409) {
+          // Duplicate detected
+          console.warn("⚠️ Duplicate report detected:", data.existingReport);
+          
+          // Show duplicate warning toast
+          const toastDiv = document.createElement('div');
+          toastDiv.className = 'fixed bottom-4 right-4 bg-yellow-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 max-w-md';
+          toastDiv.innerHTML = `
+            <div class="font-bold mb-1">⚠️ Similar Report Exists</div>
+            <div class="text-sm">${data.message}</div>
+            <div class="text-xs mt-2">Distance: ${Math.round(data.existingReport.distance)}m away</div>
+          `;
+          document.body.appendChild(toastDiv);
+          setTimeout(() => toastDiv.remove(), 5000);
       } else {
-        console.error("❌ Failed to save report:", data.error);
-        alert(`Failed to save report: ${data.error}`);
+          console.error("❌ Failed to save report:", data.error);
+          
+          // Show error toast
+          const toastDiv = document.createElement('div');
+          toastDiv.className = 'fixed bottom-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+          toastDiv.textContent = '❌ Failed to submit report';
+          document.body.appendChild(toastDiv);
+          setTimeout(() => toastDiv.remove(), 3000);
+        }
+      } catch (error) {
+        console.error("❌ Error submitting report:", error);
+        
+        // Show error toast
+        const toastDiv = document.createElement('div');
+        toastDiv.className = 'fixed bottom-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+        toastDiv.textContent = '❌ Error submitting report';
+        document.body.appendChild(toastDiv);
+        setTimeout(() => toastDiv.remove(), 3000);
       }
-    } catch (error) {
-      console.error("❌ Error submitting report:", error);
-      alert("Failed to submit report. Please try again.");
-    }
+    })();
   };
 
 
