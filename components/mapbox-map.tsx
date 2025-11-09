@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { ClusterMarker } from "@/components/cluster-marker";
 import { MapFilterLegend } from "@/components/map-filter-legend";
+import { Announcement } from "@/components/announcements-dropdown";
 import {
   reportsToGeoJSON,
   reduceClusterProperties,
@@ -48,9 +49,10 @@ interface MapboxMapProps {
   onReportSelect: (report: Report, markerPosition?: { x: number; y: number }) => void;
   showPopup?: boolean;
   onMapClick?: (location: { lat: number; lng: number; x: number; y: number }) => void;
+  announcements?: Announcement[];
 }
 
-export function MapboxMap({ onReportSelect, showPopup = false, onMapClick }: MapboxMapProps) {
+export function MapboxMap({ onReportSelect, showPopup = false, onMapClick, announcements = [] }: MapboxMapProps) {
   const [viewState, setViewState] = useState({
     longitude: -96.80,
     latitude: 32.78,
@@ -307,6 +309,27 @@ export function MapboxMap({ onReportSelect, showPopup = false, onMapClick }: Map
             );
           }
         })}
+
+        {/* Render announcement markers */}
+        {announcements.map((announcement) => (
+          <Marker
+            key={announcement.id}
+            longitude={announcement.location.lng}
+            latitude={announcement.location.lat}
+          >
+            <div
+              className="cursor-pointer hover:scale-110 transition-transform"
+              style={{
+                width: "24px",
+                height: "24px",
+                borderRadius: "50%",
+                backgroundColor: "#10b981", // green for announcements
+                border: "3px solid #ffffff",
+                boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
+              }}
+            />
+          </Marker>
+        ))}
 
         <NavigationControl position="top-right" />
         <GeolocateControl position="top-right" />
